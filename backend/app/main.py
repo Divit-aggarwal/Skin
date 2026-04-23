@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
 
+from app.api.v1.router import v1_router
 from app.config import settings
 from app.exceptions import AppError
 from app.middleware import add_middleware
@@ -29,16 +30,20 @@ add_middleware(app)
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": exc.code, "message": exc.detail, "detail": None}},
+    )
 
 
 @app.exception_handler(Exception)
 async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("Unhandled error on {} {}", request.method, request.url)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"code": "INTERNAL_ERROR", "message": "Internal server error", "detail": None}},
+    )
 
 
-api_v1 = FastAPI(title="Skin API v1")
-api_v1.include_router(health.router, tags=["health"])
-
-app.mount("/api/v1", api_v1)
+app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(v1_router, prefix="/api/v1")

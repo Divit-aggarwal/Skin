@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
 
     # App
     environment: str = "development"
