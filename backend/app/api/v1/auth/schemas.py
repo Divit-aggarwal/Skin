@@ -1,11 +1,16 @@
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, field_validator
+
+SkinType = Literal["normal", "oily", "dry", "combination", "sensitive"]
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    display_name: str | None = None
+    skin_type: SkinType | None = None
 
     @field_validator("password")
     @classmethod
