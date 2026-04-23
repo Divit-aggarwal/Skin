@@ -7,6 +7,7 @@ from sqlalchemy import pool
 
 from app.config import settings
 from app.database import Base
+import app.models  # noqa: F401 — registers all models for autogenerate
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

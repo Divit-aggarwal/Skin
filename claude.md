@@ -410,13 +410,13 @@ YOLO_CONF_THRESHOLD=0.4       ← tune from calibration sprint
 > Update this section at the end of every Claude Code session.
 
 ### ✅ Completed
-- (none yet)
+- Slice 1: Scaffolding + CI (Days 1–3) — monorepo, FastAPI shell, async SQLAlchemy, docker-compose, alembic async env
+- Slice 2: Auth (Days 4–8) — migration 001, security utils, AuthRepository/Service, /auth/register|login|refresh|logout, get_current_user dep, 12/12 tests passing
 
 ### 🔄 In Progress
-- Slice 1: Scaffolding + CI (Days 1–3)
+- Slice 3: Profile CRUD — Days 9–11
 
 ### ⏳ Remaining
-- Slice 2: Auth — Days 4–8
 - Slice 3: Profile CRUD — Days 9–11
 - Slice 4: Image Upload + Quality Gate — Days 12–15
 - Slice 5: ML Inference Integration — Days 16–22 (includes calibration sprint)
