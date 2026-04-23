@@ -19,10 +19,17 @@ class AuthService:
     def __init__(self, db: AsyncSession) -> None:
         self.repo = AuthRepository(db)
 
-    async def register(self, email: str, password: str) -> TokenResponse:
+    async def register(
+        self,
+        email: str,
+        password: str,
+        display_name: str | None = None,
+        skin_type: str | None = None,
+    ) -> TokenResponse:
         if await self.repo.get_by_email(email):
             raise ConflictError("Email already registered")
         user = await self.repo.create_user(email, hash_password(password))
+        await self.repo.create_profile(user.id, display_name=display_name, skin_type=skin_type)
         return await self._issue_tokens(user)
 
     async def login(self, email: str, password: str) -> TokenResponse:

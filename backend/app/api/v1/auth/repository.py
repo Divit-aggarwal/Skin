@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.profile import Profile
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 
@@ -51,6 +52,18 @@ class AuthRepository:
             .where(RefreshToken.jti == jti)
             .values(revoked_at=datetime.now(timezone.utc))
         )
+
+    async def create_profile(
+        self,
+        user_id: uuid.UUID,
+        display_name: str | None = None,
+        skin_type: str | None = None,
+    ) -> Profile:
+        profile = Profile(user_id=user_id, display_name=display_name, skin_type=skin_type)
+        self.db.add(profile)
+        await self.db.flush()
+        await self.db.refresh(profile)
+        return profile
 
     async def revoke_all_for_user(self, user_id: uuid.UUID) -> None:
         await self.db.execute(
