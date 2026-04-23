@@ -1,0 +1,38 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Alembic
+alembic/versions/*.pyc
+
+# macOS
+.DS_Store
+
+# Claude Code internals
+.claude/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Docker
+*.override.yml
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.prod.yml
+docker-compose.test.yml
+
+claude.md
