@@ -413,13 +413,12 @@ YOLO_CONF_THRESHOLD=0.4       ← tune from calibration sprint
 - Slice 1: Scaffolding + CI (Days 1–3) — monorepo, FastAPI shell, async SQLAlchemy, docker-compose, alembic async env
 - Slice 2: Auth (Days 4–8) — migration 001, security utils, AuthRepository/Service, /auth/register|login|refresh|logout, get_current_user dep, 12/12 tests passing
 - Slice 3: Profile CRUD (Days 9–11) — migration 002, Profile model, ProfileRepository/Service, UserRepository/Service, /users/me GET+PUT+DELETE, /users/me/profile GET+PUT, profile created atomically on register, 10/10 new tests + 12/12 auth tests passing (22 total)
+- Slice 4: Image Upload + Quality Gate (Days 12–15) — migration 003, Image model, ImageRepository/Service, POST /images/upload with size/MIME/quality validation, quality_gate.py (Laplacian blur + MediaPipe face count, mediapipe pinned at 0.10.21), 8/8 new tests + 22/22 prior tests passing (30 total). NOTE: quality gate runs as direct import in Phase 1 backend; Phase 2 migrates to httpx call to inference service. Manual selfie testing required before marking fully complete.
 
 ### 🔄 In Progress
-- Slice 4: Image Upload + Quality Gate — Days 12–15
+- Slice 5: ML Inference Integration — Days 16–22 (includes calibration sprint)
 
 ### ⏳ Remaining
-- Slice 4: Image Upload + Quality Gate — Days 12–15
-- Slice 4: Image Upload + Quality Gate — Days 12–15
 - Slice 5: ML Inference Integration — Days 16–22 (includes calibration sprint)
 - Slice 6: Report Detail UI — Days 23–26
 - Slice 7: History Screen — Days 27–30
