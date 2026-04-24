@@ -45,3 +45,26 @@ class ValidationError(AppError):
     status_code = 422
     detail = "Validation error"
     code = "VALIDATION_ERROR"
+
+
+class ImageTooLargeError(AppError):
+    status_code = 413
+    detail = "Image exceeds the maximum allowed size of 3MB"
+    code = "IMAGE_TOO_LARGE"
+
+
+class InvalidMimeTypeError(AppError):
+    status_code = 422
+    detail = "Invalid MIME type. Allowed: image/jpeg, image/png, image/webp"
+    code = "INVALID_MIME"
+
+
+class ImageQualityError(AppError):
+    status_code = 422
+    code = "IMAGE_QUALITY_FAILED"
+
+
+class MalformedBase64Error(AppError):
+    status_code = 422
+    detail = "Invalid or malformed base64 image data"
+    code = "MALFORMED_BASE64"
