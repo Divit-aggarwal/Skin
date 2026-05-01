@@ -38,7 +38,7 @@ export default function RegisterScreen() {
       const res = await authApi.register(data.email, data.password, data.displayName || undefined);
       const { access_token, refresh_token, user } = res.data;
       setTokens(access_token, refresh_token, user.id);
-      router.replace('/(app)/');
+      router.replace('/(app)/profile-setup');
     } catch (err: unknown) {
       const msg = extractErrorMessage(err);
       setApiError(msg);
