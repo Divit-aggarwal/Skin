@@ -433,9 +433,9 @@ YOLO_CONF_THRESHOLD=0.4       ← tune from calibration sprint
 ### Mobile Stack Notes
 - `npm install` must use `--legacy-peer-deps` due to react-dom peer conflict between expo-router 6 and React 19.1 vs 19.2
 - Design tokens: background #f8f7f4, primary #0a0a0a — slightly different from CLAUDE.md design system (intentional — mobile-specific). Update if there's a conflict.
-- API base URL uses `Constants.expoConfig.hostUri` (expo-constants) to auto-detect the dev machine IP. Works on physical Android devices and emulators alike — no hardcoded IP needed.
-- If `node_modules` becomes corrupted (missing files inside packages), delete `node_modules` and `package-lock.json` and reinstall with `npm install --legacy-peer-deps`.
 
-## Current branch: feat/mobile-slice-3-profile
-## Next task: Mobile Slice 4 — Upload + scan flow
-## Backend API base URL: resolved dynamically via expo-constants (port 8000)
+## Current branch: feat/mobile-slice-2-auth
+## Next task: Slice 2 — Auth screens (login + register) wired to real API at localhost:8000
+## Backend API base URL: http://localhost:8000/api/v1
+## Auth endpoints: POST /auth/register, POST /auth/login, POST /auth/refresh, POST /auth/logout
+## Token response shape: { access_token, refresh_token, user: { id, email } }

@@ -25,6 +25,7 @@ class ReportOut(BaseModel):
     blur_score: float
     face_count: int
     zone_breakdown: list[ZoneScoreOut]
+    detections: list[dict] = []  # [{bbox: [cx,cy,w,h], confidence: float, zone: str}] in original image px space
     model_version: str
     created_at: datetime
     recommendations: list["RecommendationOut"] = []

@@ -10,6 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { checkSize } from '../../utils/imageUtils';
@@ -24,6 +25,15 @@ type ScanState =
   | 'quality_failed'
   | 'analysing'
   | 'error';
+
+function parseUploadError(err: unknown): { isQualityFail: boolean; message: string } {
+  const res = (err as { response?: { data?: { error?: { code?: string; message?: string } } } })
+    .response?.data?.error;
+  if (res?.code === 'IMAGE_QUALITY_FAILED') {
+    return { isQualityFail: true, message: res.message ?? 'Image quality check failed.' };
+  }
+  return { isQualityFail: false, message: 'Connection failed. Check your WiFi and try again.' };
+}
 
 interface PickedImage {
   uri: string;
@@ -43,7 +53,9 @@ export default function ScanScreen() {
   const cameraRef = useRef<CameraView>(null);
 
   const { pickFromGallery } = useImagePicker();
+  const queryClient = useQueryClient();
   const setCurrentSession = useSessionStore((s) => s.setCurrentSession);
+  const setCapturedImageUri = useSessionStore((s) => s.setCapturedImageUri);
 
   function handlePickResult(picked: PickedImage | null) {
     if (!picked) return;
@@ -51,6 +63,7 @@ export default function ScanScreen() {
       Alert.alert('Image Too Large', 'Please choose a photo under 3 MB.');
       return;
     }
+    setCapturedImageUri(picked.uri);
     setImage(picked);
     setState('preview');
   }
@@ -92,10 +105,17 @@ export default function ScanScreen() {
       setState('analysing');
       const { data: session } = await analysisApi.createSession(imageOut.id, image.base64);
       setCurrentSession(session.id);
+      queryClient.invalidateQueries({ queryKey: ['analysis', 'history'] });
       router.replace(`/(app)/report/${session.id}`);
-    } catch {
-      setErrorMessage('Connection failed. Check your WiFi and try again.');
-      setState('error');
+    } catch (err) {
+      const { isQualityFail, message } = parseUploadError(err);
+      if (isQualityFail) {
+        setQualityReason(message);
+        setState('quality_failed');
+      } else {
+        setErrorMessage(message);
+        setState('error');
+      }
     }
   }
 
@@ -105,6 +125,7 @@ export default function ScanScreen() {
     try {
       const { data: session } = await analysisApi.createSession(imageId, image.base64);
       setCurrentSession(session.id);
+      queryClient.invalidateQueries({ queryKey: ['analysis', 'history'] });
       router.replace(`/(app)/report/${session.id}`);
     } catch {
       setErrorMessage('Analysis failed. Please try again.');
@@ -126,10 +147,17 @@ export default function ScanScreen() {
       setState('analysing');
       const { data: session } = await analysisApi.createSession(imageOut.id, image.base64);
       setCurrentSession(session.id);
+      queryClient.invalidateQueries({ queryKey: ['analysis', 'history'] });
       router.replace(`/(app)/report/${session.id}`);
-    } catch {
-      setErrorMessage('Connection failed. Check your WiFi and try again.');
-      setState('error');
+    } catch (err) {
+      const { isQualityFail, message } = parseUploadError(err);
+      if (isQualityFail) {
+        setQualityReason(message);
+        setState('quality_failed');
+      } else {
+        setErrorMessage(message);
+        setState('error');
+      }
     }
   }
 
@@ -301,8 +329,8 @@ function ErrorContent({
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
-const OVAL_W = 240;
-const OVAL_H = 300;
+const OVAL_W = 300;
+const OVAL_H = 380;
 
 const styles = StyleSheet.create({
   root: {

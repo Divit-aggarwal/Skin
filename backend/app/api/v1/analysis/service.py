@@ -131,6 +131,7 @@ class AnalysisService:
                 blur_score=report.blur_score,
                 face_count=report.face_count,
                 zone_breakdown=report.zone_breakdown,
+                detections=report.yolo_detections,
                 model_version=report.model_version,
                 created_at=report.created_at,
                 recommendations=[

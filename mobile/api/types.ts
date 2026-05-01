@@ -24,6 +24,12 @@ export interface RecommendationOut {
   priority: number;
 }
 
+export interface Detection {
+  bbox: [number, number, number, number]; // [cx, cy, w, h] in original image pixel space
+  confidence: number;
+  zone: string;
+}
+
 export interface ReportOut {
   id: string;
   session_id: string;
@@ -35,6 +41,7 @@ export interface ReportOut {
   blur_score: number;
   face_count: number;
   zone_breakdown: ZoneScore[];
+  detections: Detection[];
   model_version: string;
   created_at: string;
 }

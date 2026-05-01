@@ -76,13 +76,6 @@ export default function AppLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="scan"
         options={{
           title: 'Scan',
@@ -101,6 +94,13 @@ export default function AppLayout() {
         options={{
           title: 'Twin',
           tabBarIcon: ({ color }) => <TwinIcon color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
         }}
       />
       <Tabs.Screen
