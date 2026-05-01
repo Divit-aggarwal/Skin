@@ -11,7 +11,8 @@ import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '../../hooks/useProfile';
 import { useUserStore } from '../../store/userStore';
-import { analysisApi, SeverityLevel } from '../../api/analysis';
+import { analysisApi } from '../../api/analysis';
+import type { SeverityLevel } from '../../api/types';
 import { colors, typography, spacing, radius } from '../../constants/theme';
 
 function getGreeting() {
@@ -72,8 +73,7 @@ export default function HomeScreen() {
 
   const displayName = profile?.display_name ?? null;
   const initials = getInitials(displayName, user?.email ?? null);
-  const lastItem = historyData?.data.items[0];
-  const lastReport = lastItem?.report ?? null;
+  const lastItem = historyData?.data.items[0] ?? null;
 
   return (
     <ScrollView
@@ -98,23 +98,18 @@ export default function HomeScreen() {
           <View style={styles.scanCardEmpty}>
             <ActivityIndicator color="rgba(255,255,255,0.4)" />
           </View>
-        ) : lastReport ? (
+        ) : lastItem?.overall_score != null && lastItem.severity_level ? (
           <>
             <Text style={styles.cardLabel}>LATEST SCAN</Text>
             <View style={styles.scoreRow}>
-              <Text style={[styles.scoreNumber, { color: scoreColor(lastReport.overall_score) }]}>
-                {Math.round(lastReport.overall_score)}
+              <Text style={[styles.scoreNumber, { color: scoreColor(lastItem.overall_score) }]}>
+                {Math.round(lastItem.overall_score)}
               </Text>
-              <View style={[styles.severityBadge, { backgroundColor: severityColor(lastReport.severity_level) }]}>
+              <View style={[styles.severityBadge, { backgroundColor: severityColor(lastItem.severity_level) }]}>
                 <Text style={styles.severityText}>
-                  {lastReport.severity_level.charAt(0).toUpperCase() + lastReport.severity_level.slice(1)}
+                  {lastItem.severity_level.charAt(0).toUpperCase() + lastItem.severity_level.slice(1)}
                 </Text>
               </View>
-            </View>
-            <View style={styles.miniCards}>
-              <MiniCard label="Acne" score={lastReport.acne_score} />
-              <MiniCard label="Wrinkle" score={lastReport.wrinkle_score} />
-              <MiniCard label="Oiliness" score={lastReport.oiliness_score} />
             </View>
           </>
         ) : (
@@ -152,14 +147,14 @@ export default function HomeScreen() {
         <Text style={styles.tipEmoji}>💧</Text>
         <View style={styles.tipBody}>
           <Text style={styles.tipTitle}>
-            {lastReport?.severity_level === 'severe'
+            {lastItem?.severity_level === 'severe'
               ? 'Stick to a gentle cleanser'
-              : lastReport?.severity_level === 'moderate'
+              : lastItem?.severity_level === 'moderate'
               ? 'Add a niacinamide serum'
               : 'Stay consistent with your routine'}
           </Text>
           <Text style={styles.tipDesc}>
-            {lastReport
+            {lastItem
               ? 'Based on your latest scan results.'
               : 'Scan your skin to get personalised recommendations.'}
           </Text>
