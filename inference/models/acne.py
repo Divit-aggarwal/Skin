@@ -2,7 +2,7 @@
 
 Expected ONNX I/O (Ultralytics export format, single-class model):
   Input:  [1, 3, 640, 640]  float32   (normalised 0–1, RGB, NCHW)
-  Output: [1, 5, 8400]       float32   (cx, cy, w, h, conf) in 640-px space
+  Output: [1, 84, 8400]      float32   (cx, cy, w, h, 80 class scores) in 640-px space
 """
 
 import numpy as np
@@ -47,32 +47,42 @@ def _postprocess(
 ) -> list[dict]:
     """Parse YOLO output to detection list.
 
-    raw shape: [1, 5, 8400]  — (cx, cy, w, h, conf) in 640-px letterboxed space.
+    raw shape: [1, 84, 8400]  — (cx, cy, w, h, 80 class scores) in 640-px letterboxed space.
     Returns list of {bbox: [cx, cy, w, h], confidence: float, zone: str}
     where bbox is in original image pixel space.
     """
-    preds = raw[0]  # [5, 8400]
-    if preds.shape[0] == 5:
-        preds = preds.T  # [8400, 5]
-    # preds: [8400, 5]  columns: cx, cy, w, h, conf
-    mask = preds[:, 4] >= conf_threshold
+    import cv2
+
+    preds = raw[0].T  # [8400, 84]
+    # confidence = max class score across columns 4:84
+    confs = np.max(preds[:, 4:], axis=1)
+    mask = confs >= conf_threshold
     preds = preds[mask]
+    confs = confs[mask]
     if len(preds) == 0:
         return []
 
-    # Convert from letterboxed 640-space back to original image space
-    cx = (preds[:, 0] - pad_x) / scale_x
-    cy = (preds[:, 1] - pad_y) / scale_y
-    bw = preds[:, 2] / scale_x
-    bh = preds[:, 3] / scale_y
-    confs = preds[:, 4]
+    # Letterbox uses one uniform scale; scale_x == scale_y
+    scale = scale_x
+    cx = (preds[:, 0] - pad_x) / scale
+    cy = (preds[:, 1] - pad_y) / scale
+    bw = preds[:, 2] / scale
+    bh = preds[:, 3] / scale
 
-    # Clip to image bounds
     cx = np.clip(cx, 0, orig_w)
     cy = np.clip(cy, 0, orig_h)
 
+    # NMS: OpenCV expects (x1, y1, w, h)
+    x1 = (cx - bw / 2).tolist()
+    y1 = (cy - bh / 2).tolist()
+    boxes = [[x1[i], y1[i], float(bw[i]), float(bh[i])] for i in range(len(preds))]
+    indices = cv2.dnn.NMSBoxes(boxes, confs.tolist(), conf_threshold, 0.45)
+    if len(indices) == 0:
+        return []
+    indices = np.array(indices).flatten()
+
     detections = []
-    for i in range(len(preds)):
+    for i in indices:
         bbox = [float(cx[i]), float(cy[i]), float(bw[i]), float(bh[i])]
         zone = map_bbox_to_zone(bbox, orig_w, orig_h)
         detections.append({"bbox": bbox, "confidence": float(confs[i]), "zone": zone})

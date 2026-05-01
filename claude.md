@@ -415,13 +415,27 @@ YOLO_CONF_THRESHOLD=0.4       ← tune from calibration sprint
 - Slice 3: Profile CRUD (Days 9–11) — migration 002, Profile model, ProfileRepository/Service, UserRepository/Service, /users/me GET+PUT+DELETE, /users/me/profile GET+PUT, profile created atomically on register, 10/10 new tests + 12/12 auth tests passing (22 total)
 - Slice 4: Image Upload + Quality Gate (Days 12–15) — migration 003, Image model, ImageRepository/Service, POST /images/upload with size/MIME/quality validation, quality_gate.py (Laplacian blur + MediaPipe face count, mediapipe pinned at 0.10.21), 8/8 new tests + 22/22 prior tests passing (30 total). NOTE: quality gate runs as direct import in Phase 1 backend; Phase 2 migrates to httpx call to inference service. Manual selfie testing required before marking fully complete.
 - Slice 5: ML Inference Integration — Days 16–22 (code + tests complete; calibration sprint pending). migrations 004+005, AnalysisSession/Report/Recommendation models, analysis/ API (POST /analysis/sessions, GET sessions/{id}, GET sessions/{id}/report, GET /analysis/history), inference service fully wired (YOLOv11n acne, U-Net wrinkle, HSV oiliness, zone mapper, pipeline), rule-based recommendations, 38/38 backend tests + 8/8 inference pipeline tests passing. NOTE: SessionCreateRequest includes image_data field (Phase 1 only — Phase 2 will pull from S3). CALIBRATION SPRINT required before Slice 6: run 50+ real selfies, tune BLUR_SCORE_THRESHOLD + YOLO_CONF_THRESHOLD, create inference/CALIBRATION.md.
+- Mobile Slice 1: Frontend Scaffold — Expo SDK 54 + expo-router 6, TypeScript strict, folder structure (app/, store/, api/, constants/, utils/, schemas/), design tokens, authStore (Zustand), axios client with Bearer interceptor, zod auth schemas, ESLint + Prettier. Zero tsc errors. `npx expo start` ready.
+- Mobile Slice 2: Auth screens — login + register wired to real API, token persistence, single-flight refresh lock in axios interceptor. Zero tsc errors.
+- Mobile Slice 3: Profile CRUD + Home dashboard — api/users.ts (getMe/getProfile/updateProfile/deleteAccount), api/analysis.ts stub, userStore (Zustand + profileSetupSeen flag), useProfile/useUpdateProfile hooks (TanStack Query), profile-setup screen (name/age/skin-type pill selector, save + skip), home dashboard (greeting, avatar initials, dark last-scan card with score/severity/mini-cards, empty state, contextual tip cards), Tabs layout with custom View-based icons. Zero tsc errors. Register redirects to profile-setup on new account.
 
 ### 🔄 In Progress
 - Slice 5 calibration sprint — manual selfie testing, threshold tuning, CALIBRATION.md
 
 ### ⏳ Remaining
+- Mobile Slice 4: Upload + scan flow
 - Slice 6: Report Detail UI — Days 23–26
 - Slice 7: History Screen — Days 27–30
 - Slice 8: Onboarding + Settings — Days 31–36
 - Slice 9: Digital Twin Scaffold — Days 37–39
 - Slice 10: Integration Pass + Production Foundations — Days 40–44
+
+### Mobile Stack Notes
+- `npm install` must use `--legacy-peer-deps` due to react-dom peer conflict between expo-router 6 and React 19.1 vs 19.2
+- Design tokens: background #f8f7f4, primary #0a0a0a — slightly different from CLAUDE.md design system (intentional — mobile-specific). Update if there's a conflict.
+- API base URL uses `Constants.expoConfig.hostUri` (expo-constants) to auto-detect the dev machine IP. Works on physical Android devices and emulators alike — no hardcoded IP needed.
+- If `node_modules` becomes corrupted (missing files inside packages), delete `node_modules` and `package-lock.json` and reinstall with `npm install --legacy-peer-deps`.
+
+## Current branch: feat/mobile-slice-3-profile
+## Next task: Mobile Slice 4 — Upload + scan flow
+## Backend API base URL: resolved dynamically via expo-constants (port 8000)
