@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # Inference service
     inference_url: str = "http://inference:8001"
+    inference_timeout_seconds: int = 30
 
 
 settings = Settings()
