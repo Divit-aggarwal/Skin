@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,10 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  ScrollView,
+  Linking,
 } from 'react-native';
 import { router } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { checkSize } from '../../utils/imageUtils';
 import { imagesApi } from '../../api/images';
@@ -38,7 +39,10 @@ export default function ScanScreen() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [imageId, setImageId] = useState<string | null>(null);
 
-  const { pickFromCamera, pickFromGallery } = useImagePicker();
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
+
+  const { pickFromGallery } = useImagePicker();
   const setCurrentSession = useSessionStore((s) => s.setCurrentSession);
 
   function handlePickResult(picked: PickedImage | null) {
@@ -51,9 +55,16 @@ export default function ScanScreen() {
     setState('preview');
   }
 
-  async function onCamera() {
-    const picked = await pickFromCamera();
-    handlePickResult(picked);
+  async function onCapture() {
+    if (!cameraRef.current) return;
+    const photo = await cameraRef.current.takePictureAsync({ quality: 0.85, base64: true });
+    if (!photo) return;
+    handlePickResult({
+      uri: photo.uri,
+      base64: photo.base64 ?? '',
+      mimeType: 'image/jpeg',
+      fileSize: undefined,
+    });
   }
 
   async function onGallery() {
@@ -89,10 +100,7 @@ export default function ScanScreen() {
   }
 
   async function onRetryAnalysis() {
-    if (!image || !imageId) {
-      onRetake();
-      return;
-    }
+    if (!image || !imageId) { onRetake(); return; }
     setState('analysing');
     try {
       const { data: session } = await analysisApi.createSession(imageId, image.base64);
@@ -105,10 +113,7 @@ export default function ScanScreen() {
   }
 
   async function onRetryUpload() {
-    if (!image) {
-      onRetake();
-      return;
-    }
+    if (!image) { onRetake(); return; }
     setState('uploading');
     try {
       const { data: imageOut } = await imagesApi.upload(image.base64, image.mimeType);
@@ -128,16 +133,55 @@ export default function ScanScreen() {
     }
   }
 
+  if (!permission) {
+    return <View style={styles.root} />;
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={[styles.root, styles.permissionRoot]}>
+        <Text style={styles.permissionText}>Camera access required</Text>
+        <TouchableOpacity
+          style={styles.settingsBtn}
+          onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.settingsBtnText}>Open Settings</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (state === 'idle') {
+    return (
+      <View style={styles.root}>
+        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
+        <View style={styles.ovalOverlay}>
+          <View style={styles.cameraOval}>
+            <Corner position="topLeft" />
+            <Corner position="topRight" />
+            <Corner position="bottomLeft" />
+            <Corner position="bottomRight" />
+          </View>
+          <Text style={styles.hint}>Position your face within the oval</Text>
+        </View>
+        <View style={styles.captureBar}>
+          <TouchableOpacity style={styles.captureBtn} onPress={onCapture} activeOpacity={0.85}>
+            <View style={styles.captureInner} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onGallery} activeOpacity={0.7} style={styles.galleryTouchable}>
+            <Text style={styles.galleryText}>Choose from gallery</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root}>
-      {/* Oval frame always visible */}
       <View style={styles.ovalContainer}>
         <View style={styles.oval}>
-          {image ? (
-            <Image source={{ uri: image.uri }} style={styles.preview} />
-          ) : (
-            <View style={styles.ovalInner} />
-          )}
+          {image && <Image source={{ uri: image.uri }} style={styles.preview} />}
           <Corner position="topLeft" />
           <Corner position="topRight" />
           <Corner position="bottomLeft" />
@@ -145,24 +189,18 @@ export default function ScanScreen() {
         </View>
       </View>
 
-      {state === 'idle' && <IdleContent onCamera={onCamera} onGallery={onGallery} />}
-
       {state === 'preview' && (
         <PreviewContent onUse={onUsePhoto} onRetake={onRetake} />
       )}
-
       {state === 'uploading' && (
         <StatusContent label="Checking image quality..." onAbort={onRetake} />
       )}
-
       {state === 'analysing' && (
         <StatusContent label="Analysing your skin..." onAbort={onRetake} />
       )}
-
       {state === 'quality_failed' && (
         <QualityFailedContent reason={qualityReason} onRetry={onRetake} />
       )}
-
       {state === 'error' && (
         <ErrorContent
           message={errorMessage}
@@ -200,40 +238,6 @@ function Corner({ position }: { position: CornerPosition }) {
 }
 
 // ── Sub-components ───────────────────────────────────────────────────────────
-
-function IdleContent({
-  onCamera,
-  onGallery,
-}: {
-  onCamera: () => void;
-  onGallery: () => void;
-}) {
-  return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.hint}>Position your face inside the frame</Text>
-      <View style={styles.tips}>
-        <TipRow text="Good lighting, face the source" />
-        <TipRow text="Face fills most of the frame" />
-        <TipRow text="Remove glasses for best results" />
-      </View>
-      <TouchableOpacity style={styles.primaryBtn} onPress={onCamera} activeOpacity={0.85}>
-        <Text style={styles.primaryBtnText}>Take photo</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.ghostBtn} onPress={onGallery} activeOpacity={0.7}>
-        <Text style={styles.ghostBtnText}>Choose from gallery</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-}
-
-function TipRow({ text }: { text: string }) {
-  return (
-    <View style={styles.tipRow}>
-      <View style={styles.tipDot} />
-      <Text style={styles.tipText}>{text}</Text>
-    </View>
-  );
-}
 
 function PreviewContent({ onUse, onRetake }: { onUse: () => void; onRetake: () => void }) {
   return (
@@ -306,6 +310,75 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     alignItems: 'center',
   },
+  // Permission denied
+  permissionRoot: {
+    justifyContent: 'center',
+    gap: 20,
+  },
+  permissionText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  settingsBtn: {
+    paddingHorizontal: 32,
+    height: 48,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsBtnText: {
+    color: '#0a0a0a',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  // Camera idle overlay
+  ovalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraOval: {
+    width: OVAL_W,
+    height: OVAL_H,
+    borderRadius: 120,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.5)',
+    marginBottom: 12,
+  },
+  captureBar: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  captureBtn: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  captureInner: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#0a0a0a',
+  },
+  galleryTouchable: {
+    padding: 8,
+  },
+  galleryText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+  },
+  // Preview / non-idle states
   ovalContainer: {
     marginTop: 72,
     marginBottom: 32,
@@ -320,10 +393,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  ovalInner: {
-    width: '100%',
-    height: '100%',
   },
   preview: {
     width: OVAL_W,
@@ -343,29 +412,8 @@ const styles = StyleSheet.create({
   },
   hint: {
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  tips: {
-    alignSelf: 'stretch',
-    marginBottom: 32,
-    gap: 8,
-  },
-  tipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  tipDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  tipText: {
-    color: 'rgba(255,255,255,0.5)',
     fontSize: 13,
+    textAlign: 'center',
   },
   primaryBtn: {
     width: '100%',
