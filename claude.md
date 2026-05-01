@@ -414,12 +414,12 @@ YOLO_CONF_THRESHOLD=0.4       ← tune from calibration sprint
 - Slice 2: Auth (Days 4–8) — migration 001, security utils, AuthRepository/Service, /auth/register|login|refresh|logout, get_current_user dep, 12/12 tests passing
 - Slice 3: Profile CRUD (Days 9–11) — migration 002, Profile model, ProfileRepository/Service, UserRepository/Service, /users/me GET+PUT+DELETE, /users/me/profile GET+PUT, profile created atomically on register, 10/10 new tests + 12/12 auth tests passing (22 total)
 - Slice 4: Image Upload + Quality Gate (Days 12–15) — migration 003, Image model, ImageRepository/Service, POST /images/upload with size/MIME/quality validation, quality_gate.py (Laplacian blur + MediaPipe face count, mediapipe pinned at 0.10.21), 8/8 new tests + 22/22 prior tests passing (30 total). NOTE: quality gate runs as direct import in Phase 1 backend; Phase 2 migrates to httpx call to inference service. Manual selfie testing required before marking fully complete.
+- Slice 5: ML Inference Integration — Days 16–22 (code + tests complete; calibration sprint pending). migrations 004+005, AnalysisSession/Report/Recommendation models, analysis/ API (POST /analysis/sessions, GET sessions/{id}, GET sessions/{id}/report, GET /analysis/history), inference service fully wired (YOLOv11n acne, U-Net wrinkle, HSV oiliness, zone mapper, pipeline), rule-based recommendations, 38/38 backend tests + 8/8 inference pipeline tests passing. NOTE: SessionCreateRequest includes image_data field (Phase 1 only — Phase 2 will pull from S3). CALIBRATION SPRINT required before Slice 6: run 50+ real selfies, tune BLUR_SCORE_THRESHOLD + YOLO_CONF_THRESHOLD, create inference/CALIBRATION.md.
 
 ### 🔄 In Progress
-- Slice 5: ML Inference Integration — Days 16–22 (includes calibration sprint)
+- Slice 5 calibration sprint — manual selfie testing, threshold tuning, CALIBRATION.md
 
 ### ⏳ Remaining
-- Slice 5: ML Inference Integration — Days 16–22 (includes calibration sprint)
 - Slice 6: Report Detail UI — Days 23–26
 - Slice 7: History Screen — Days 27–30
 - Slice 8: Onboarding + Settings — Days 31–36

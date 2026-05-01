@@ -1,19 +1,21 @@
-"""Loads and caches ONNX model sessions on inference service startup.
+from __future__ import annotations
 
-Implemented in Slice 5. Expected weight files:
-  weights/yolo11n_acne.onnx
-  weights/unet_wrinkle.onnx
-"""
+from typing import TYPE_CHECKING
 
-import onnxruntime as ort
+if TYPE_CHECKING:
+    import onnxruntime as ort
 
-_acne_session: ort.InferenceSession | None = None
-_wrinkle_session: ort.InferenceSession | None = None
+_acne_session = None
+_wrinkle_session = None
 
 
 def load_models(acne_path: str, wrinkle_path: str) -> None:
     """Load ONNX sessions into module-level singletons. Called once at startup."""
-    raise NotImplementedError("Model loading implemented in Slice 5")
+    import onnxruntime as ort  # noqa: PLC0415 — intentional lazy import
+
+    global _acne_session, _wrinkle_session
+    _acne_session = ort.InferenceSession(acne_path, providers=["CPUExecutionProvider"])
+    _wrinkle_session = ort.InferenceSession(wrinkle_path, providers=["CPUExecutionProvider"])
 
 
 def get_acne_session() -> ort.InferenceSession:

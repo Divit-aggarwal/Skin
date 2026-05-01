@@ -35,6 +35,7 @@ services:
   inference:
     build:
       context: ./inference
+    env_file: .env
     environment:
       PORT: "8001"
     ports:

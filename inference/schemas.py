@@ -21,3 +21,4 @@ class InferResponse(BaseModel):
     blur_score: float
     face_count: int
     model_version: str
+    yolo_detections: list[dict] = []
