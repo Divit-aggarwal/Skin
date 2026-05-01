@@ -68,3 +68,9 @@ class MalformedBase64Error(AppError):
     status_code = 422
     detail = "Invalid or malformed base64 image data"
     code = "MALFORMED_BASE64"
+
+
+class InferenceServiceError(AppError):
+    status_code = 503
+    detail = "Inference service unavailable"
+    code = "INFERENCE_SERVICE_UNAVAILABLE"
